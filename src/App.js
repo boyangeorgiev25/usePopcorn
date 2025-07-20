@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-
+import StarRating from "./components/StarRating";
 const tempWatchedData = [
   {
     imdbID: "tt1375666",
@@ -38,7 +38,11 @@ export default function App() {
   const [selectedId, setSelectedId] = useState(null);
 
   function handleSelectMovie(id) {
-    setSelectedId(id);
+    setSelectedId((selectedId) => (id === selectedId ? null : id));
+  }
+
+  function closeMovie() {
+    setSelectedId(null);
   }
 
   useEffect(
@@ -102,7 +106,7 @@ export default function App() {
 
         <Box>
           {selectedId ? (
-            <SelectedMovie selectedId={selectedId} />
+            <SelectedMovie onCloce={closeMovie} selectedId={selectedId} />
           ) : (
             <>
               <Summary watched={watched} />
@@ -191,7 +195,7 @@ function MovieBox({ movies, onClick }) {
 
 function MovieList({ movies, onClick }) {
   return (
-    <ul className="list">
+    <ul className="list list-movies">
       {movies?.map((movie) => (
         <li key={movie.imdbID}>
           <div onClick={() => onClick(movie.imdbID)}>
@@ -210,8 +214,64 @@ function MovieList({ movies, onClick }) {
   );
 }
 
-function SelectedMovie({ selectedId }) {
-  return <div className="detils">{selectedId}</div>;
+function SelectedMovie({ onCloce, selectedId }) {
+  const [movie, setMovie] = useState({});
+
+  const {
+    Title: title,
+    Year: year,
+    Poster: poster,
+    Runtime: runtime,
+    imdbRating,
+    Plot: plot,
+    Released: released,
+    Actors: actors,
+    Director: director,
+    Genre: genre,
+  } = movie;
+
+  useEffect(
+    function () {
+      async function getMovieDetails() {
+        const res = await fetch(
+          `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
+        );
+        const data = await res.json();
+        setMovie(data);
+      }
+      getMovieDetails();
+    },
+    [selectedId]
+  );
+
+  return (
+    <div className="details">
+      <header>
+        <button className="btn-back" onClick={onCloce}>
+          &larr;
+        </button>
+        <img src={poster} alt={`Poster of ${movie}`} />
+
+        <div className="details-overview">
+          <h2>{movie.Title}</h2>
+          <p>
+            {released} &bull; {runtime}
+          </p>
+          <p>{genre}</p>
+          <p>{imdbRating} IMDb Rating</p>
+        </div>
+      </header>
+
+      <section>
+        <StarRating max={10} />
+        <p>
+          <em>{plot}</em>
+        </p>
+        <p>Starring {actors}</p>
+        <p>Directed by {director}</p>
+      </section>
+    </div>
+  );
 }
 
 function Box({ children }) {
@@ -231,7 +291,6 @@ function WatchedBox({ watched }) {
       </button>
       {isOpen2 && (
         <>
-          <Summary watched={watched} />
           <WatchedList watched={watched} />
         </>
       )}

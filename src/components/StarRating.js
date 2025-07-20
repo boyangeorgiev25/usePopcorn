@@ -1,10 +1,10 @@
 import { useState } from "react";
 
-const contanerStyle = {
+const containerStyle = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  height: "100vh",
+  padding: "1rem",
 };
 
 const starContainerStyle = {
@@ -28,7 +28,7 @@ export default function StarRating({
   };
 
   return (
-    <div style={contanerStyle} className={clasName}>
+    <div style={containerStyle} className={clasName}>
       <div style={starContainerStyle}>
         {[...Array(max)].map((_, index) => (
           <Star

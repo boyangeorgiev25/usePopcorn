@@ -1,28 +1,4 @@
-import { useEffect, useState } from "react";
-
-// const tempMovieData = [
-//   {
-//     imdbID: "tt1375666",
-//     Title: "Inception",
-//     Year: "2010",
-//     Poster:
-//       "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-//   },
-//   {
-//     imdbID: "tt0133093",
-//     Title: "The Matrix",
-//     Year: "1999",
-//     Poster:
-//       "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg",
-//   },
-//   {
-//     imdbID: "tt6751668",
-//     Title: "Parasite",
-//     Year: "2019",
-//     Poster:
-//       "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg",
-//   },
-// ];
+import React, { useState, useEffect } from "react";
 
 const tempWatchedData = [
   {
@@ -52,26 +28,107 @@ const average = (arr) =>
 
 const KEY = "b624d095";
 
+// Main App component
 export default function App() {
+  const [watched, setWatched] = useState([]);
   const [movies, setMovies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
 
-  useEffect(function () {
-    fetch(`http://www.omdbapi.com/?apikey=${KEY}&s=star+wars`)
-      .then((res) => res.json())
-      .then((data) => setMovies(data.Search));
-  }, []);
+  function handleSelectMovie(id) {
+    setSelectedId(id);
+  }
+
+  useEffect(
+    function () {
+      async function fetchMovies() {
+        try {
+          setLoading(true);
+          setError("");
+
+          const res = await fetch(
+            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+          );
+          if (!res.ok) {
+            throw new Error("Network response was not ok");
+          }
+
+          const data = await res.json();
+          if (data.Response === "False") {
+            throw new Error("Movie not found");
+          }
+
+          if (!data.Search) {
+            throw new Error("Movie not found");
+          }
+
+          setMovies(data.Search);
+        } catch (error) {
+          setError(error.message);
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      if (query.length < 3) {
+        setMovies([]);
+        setError("");
+        setLoading(false);
+        return;
+      }
+
+      fetchMovies();
+    },
+    [query]
+  );
+
   return (
     <>
       <NavBar>
-        <Search />
+        <Search query={query} setQuery={setQuery} />
         <NumOfMovies movies={movies} />
       </NavBar>
 
       <Main>
-        <MovieBox movies={movies} />
-        <WatchedBox />
+        <Box>
+          {loading && <Loader />}
+          {error && <ErrorMessage message={error} />}
+          {!loading && !error && (
+            <MovieBox onClick={handleSelectMovie} movies={movies} />
+          )}
+        </Box>
+
+        <Box>
+          {selectedId ? (
+            <SelectedMovie selectedId={selectedId} />
+          ) : (
+            <>
+              <Summary watched={watched} />
+              <WatchedBox watched={watched} />
+            </>
+          )}
+        </Box>
       </Main>
     </>
+  );
+}
+
+function Loader() {
+  return (
+    <div className="loader">
+      <p className="loader__text">Loading...</p>
+    </div>
+  );
+}
+
+function ErrorMessage({ message }) {
+  return (
+    <div className="error">
+      <p className="error__text">{message}</p>
+      <span>:(</span>
+    </div>
   );
 }
 
@@ -97,8 +154,7 @@ function Logo() {
   );
 }
 
-function Search() {
-  const [query, setQuery] = useState("");
+function Search({ query, setQuery }) {
   return (
     <input
       className="search"
@@ -118,7 +174,7 @@ function NumOfMovies({ movies }) {
   );
 }
 
-function MovieBox({ movies }) {
+function MovieBox({ movies, onClick }) {
   const [isOpen1, setIsOpen1] = useState(true);
   return (
     <div className="box">
@@ -128,41 +184,42 @@ function MovieBox({ movies }) {
       >
         {isOpen1 ? "–" : "+"}
       </button>
-      {isOpen1 && <MovieList movies={movies} />}
+      {isOpen1 && <MovieList onClick={onClick} movies={movies} />}
     </div>
   );
 }
 
-function MovieList({ movies }) {
+function MovieList({ movies, onClick }) {
   return (
     <ul className="list">
       {movies?.map((movie) => (
         <li key={movie.imdbID}>
-          <Movie movie={movie} />
+          <div onClick={() => onClick(movie.imdbID)}>
+            <img src={movie.Poster} alt={`${movie.Title} poster`} />
+            <h3>{movie.Title}</h3>
+            <div>
+              <p>
+                <span>🗓</span>
+                <span>{movie.Year}</span>
+              </p>
+            </div>
+          </div>
         </li>
       ))}
     </ul>
   );
 }
 
-function Movie({ movie }) {
-  return (
-    <li key={movie.imdbID}>
-      <img src={movie.Poster} alt={`${movie.Title} poster`} />
-      <h3>{movie.Title}</h3>
-      <div>
-        <p>
-          <span>🗓</span>
-          <span>{movie.Year}</span>
-        </p>
-      </div>
-    </li>
-  );
+function SelectedMovie({ selectedId }) {
+  return <div className="detils">{selectedId}</div>;
 }
 
-function WatchedBox() {
+function Box({ children }) {
+  return <div className="box">{children}</div>;
+}
+
+function WatchedBox({ watched }) {
   const [isOpen2, setIsOpen2] = useState(true);
-  const [watched, setWatched] = useState([]);
 
   return (
     <div className="box">

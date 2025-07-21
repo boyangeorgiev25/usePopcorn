@@ -32,7 +32,7 @@
   <hr />
 
   <h2>🚀 Getting Started</h2>
-  <pre><code>git clone https://github.com/your-username/use-popcorn.git
+  <pre><code>git clone https://github.com/boyangeorgiev25/use-popcorn.git
 cd use-popcorn
 npm install
 npm start</code></pre>

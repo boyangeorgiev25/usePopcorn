@@ -1,27 +1,5 @@
 import React, { useState, useEffect } from "react";
 import StarRating from "./components/StarRating";
-const tempWatchedData = [
-  {
-    imdbID: "tt1375666",
-    Title: "Inception",
-    Year: "2010",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-    runtime: 148,
-    imdbRating: 8.8,
-    userRating: 10,
-  },
-  {
-    imdbID: "tt0088763",
-    Title: "Back to the Future",
-    Year: "1985",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BZmU0M2Y1OGUtZjIxNi00ZjBkLTg1MjgtOWIyNThiZWIwYjRiXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_SX300.jpg",
-    runtime: 116,
-    imdbRating: 8.5,
-    userRating: 9,
-  },
-];
 
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
@@ -43,6 +21,17 @@ export default function App() {
 
   function closeMovie() {
     setSelectedId(null);
+  }
+
+  function handleAddWatched(movie) {
+    setWatched((prev) => {
+      const exists = prev.some((m) => m.imdbID === movie.imdbID);
+      if (exists) {
+        return prev.map((m) => (m.imdbID === movie.imdbID ? movie : m));
+      } else {
+        return [...prev, movie];
+      }
+    });
   }
 
   useEffect(
@@ -68,7 +57,15 @@ export default function App() {
             throw new Error("Movie not found");
           }
 
-          setMovies(data.Search);
+          setMovies(
+            data.Search.filter(
+              (movie) =>
+                movie.Poster &&
+                movie.Poster !== "N/A" &&
+                movie.Poster.startsWith("http") &&
+                !movie.Poster.includes("noposter.jpg")
+            )
+          );
         } catch (error) {
           setError(error.message);
         } finally {
@@ -106,7 +103,11 @@ export default function App() {
 
         <Box>
           {selectedId ? (
-            <SelectedMovie onCloce={closeMovie} selectedId={selectedId} />
+            <SelectedMovie
+              onWatched={handleAddWatched}
+              onCloce={closeMovie}
+              selectedId={selectedId}
+            />
           ) : (
             <>
               <Summary watched={watched} />
@@ -214,8 +215,9 @@ function MovieList({ movies, onClick }) {
   );
 }
 
-function SelectedMovie({ onCloce, selectedId }) {
+function SelectedMovie({ onWatched, onCloce, selectedId }) {
   const [movie, setMovie] = useState({});
+  const [userRating, setUserRating] = useState();
 
   const {
     Title: title,
@@ -244,16 +246,35 @@ function SelectedMovie({ onCloce, selectedId }) {
     [selectedId]
   );
 
+  function handleAddWached() {
+    const newMovie = {
+      imdbID: selectedId,
+      title,
+      year,
+      poster,
+      imdbRating: Number(imdbRating),
+      runtime: Number(runtime.split(" ").at(0)),
+      userRating,
+    };
+    onWatched(newMovie);
+  }
+
   return (
     <div className="details">
       <header>
         <button className="btn-back" onClick={onCloce}>
           &larr;
         </button>
-        <img src={poster} alt={`Poster of ${movie}`} />
-
+        <img
+          src={movie.Poster}
+          alt={`${movie.Title} poster`}
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.style.display = "none";
+          }}
+        />
         <div className="details-overview">
-          <h2>{movie.Title}</h2>
+          <h2>{title}</h2>
           <p>
             {released} &bull; {runtime}
           </p>
@@ -263,7 +284,18 @@ function SelectedMovie({ onCloce, selectedId }) {
       </header>
 
       <section>
-        <StarRating max={10} />
+        <StarRating onSetRating={setUserRating} max={10} />
+        {userRating > 0 && (
+          <button
+            onClick={() => {
+              handleAddWached();
+              onCloce();
+            }}
+            className="btn-add"
+          >
+            Add to watched list
+          </button>
+        )}
         <p>
           <em>{plot}</em>
         </p>
@@ -308,19 +340,19 @@ function Summary({ watched }) {
       <div>
         <p>
           <span>#️⃣</span>
-          <span>{watched.length} movies</span>
+          <span>{Math.round(watched.length)} movies</span>
         </p>
         <p>
           <span>⭐️</span>
-          <span>{avgImdbRating}</span>
+          <span>{Math.round(avgImdbRating)}</span>
         </p>
         <p>
           <span>🌟</span>
-          <span>{avgUserRating}</span>
+          <span>{Math.round(avgUserRating)}</span>
         </p>
         <p>
           <span>⏳</span>
-          <span>{avgRuntime} min</span>
+          <span>{Math.round(avgRuntime)} min</span>
         </p>
       </div>
     </div>
@@ -340,8 +372,8 @@ function WatchedList({ watched }) {
 function WatchedMovie({ movie }) {
   return (
     <li key={movie.imdbID}>
-      <img src={movie.Poster} alt={`${movie.Title} poster`} />
-      <h3>{movie.Title}</h3>
+      <img src={movie.poster} alt={`${movie.title} poster`} />
+      <h3>{movie.title}</h3>
       <div>
         <p>
           <span>⭐️</span>

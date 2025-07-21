@@ -16,6 +16,7 @@ export default function StarRating({
   color = "#fcc419",
   size = "24px",
   clasName = "",
+  onSetRating = () => {},
 }) {
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(0);
@@ -33,7 +34,10 @@ export default function StarRating({
         {[...Array(max)].map((_, index) => (
           <Star
             key={index}
-            onClick={() => setRating(index + 1)}
+            onClick={() => {
+              setRating(index + 1);
+              onSetRating(index + 1);
+            }}
             full={hovered ? hovered >= index + 1 : rating >= index + 1}
             onMouseEnter={() => setHovered(index + 1)}
             onMouseLeave={() => setHovered(0)}

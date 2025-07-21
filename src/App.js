@@ -86,7 +86,7 @@ export default function App() {
   );
 
   return (
-    <>
+    <div className="container">
       <NavBar>
         <Search query={query} setQuery={setQuery} />
         <NumOfMovies movies={movies} />
@@ -116,7 +116,7 @@ export default function App() {
           )}
         </Box>
       </Main>
-    </>
+    </div>
   );
 }
 

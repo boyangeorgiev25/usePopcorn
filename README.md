@@ -25,7 +25,7 @@
   <ul>
     <li><strong>React</strong> (Functional Components + Hooks)</li>
     <li><strong>CSS</strong> (no external UI frameworks)</li>
-    <li><strong>OMDb API</strong> (to be integrated)</li>
+    <li><strong>OMDb API</strong></li>
     <li>Local state management with React</li>
   </ul>
 

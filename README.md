@@ -55,7 +55,7 @@ npm start</code></pre>
   <ul>
     <li>⏫ Full OMDb API integration</li>
     <li>💾 Save watched list to local storage</li>
-    <li>🗑 Remove a movie from watched</li>
+    <li>🗑 Remove a movie from watched ✅</li>
     <li>📱 Add dark mode and mobile gestures</li>
   </ul>
 

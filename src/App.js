@@ -6,7 +6,6 @@ const average = (arr) =>
 
 const KEY = "b624d095";
 
-// Main App component
 export default function App() {
   const [watched, setWatched] = useState([]);
   const [movies, setMovies] = useState([]);
@@ -32,6 +31,10 @@ export default function App() {
         return [...prev, movie];
       }
     });
+  }
+
+  function handleDeleteMovie(id) {
+    setWatched((watched) => watched.filter((m) => m.imdbID !== id));
   }
 
   useEffect(
@@ -104,6 +107,7 @@ export default function App() {
         <Box>
           {selectedId ? (
             <SelectedMovie
+              watched={watched}
               onWatched={handleAddWatched}
               onCloce={closeMovie}
               selectedId={selectedId}
@@ -111,7 +115,10 @@ export default function App() {
           ) : (
             <>
               <Summary watched={watched} />
-              <WatchedBox watched={watched} />
+              <WatchedBox
+                handleDeleteMovie={handleDeleteMovie}
+                watched={watched}
+              />
             </>
           )}
         </Box>
@@ -180,18 +187,7 @@ function NumOfMovies({ movies }) {
 }
 
 function MovieBox({ movies, onClick }) {
-  const [isOpen1, setIsOpen1] = useState(true);
-  return (
-    <div className="box">
-      <button
-        className="btn-toggle"
-        onClick={() => setIsOpen1((open) => !open)}
-      >
-        {isOpen1 ? "–" : "+"}
-      </button>
-      {isOpen1 && <MovieList onClick={onClick} movies={movies} />}
-    </div>
-  );
+  return <MovieList onClick={onClick} movies={movies} />;
 }
 
 function MovieList({ movies, onClick }) {
@@ -215,7 +211,7 @@ function MovieList({ movies, onClick }) {
   );
 }
 
-function SelectedMovie({ onWatched, onCloce, selectedId }) {
+function SelectedMovie({ watched, onWatched, onCloce, selectedId }) {
   const [movie, setMovie] = useState({});
   const [userRating, setUserRating] = useState();
 
@@ -259,6 +255,8 @@ function SelectedMovie({ onWatched, onCloce, selectedId }) {
     onWatched(newMovie);
   }
 
+  const isWached = watched.map((m) => m.imdbID).includes(selectedId);
+
   return (
     <div className="details">
       <header>
@@ -284,17 +282,26 @@ function SelectedMovie({ onWatched, onCloce, selectedId }) {
       </header>
 
       <section>
-        <StarRating onSetRating={setUserRating} max={10} />
-        {userRating > 0 && (
-          <button
-            onClick={() => {
-              handleAddWached();
-              onCloce();
-            }}
-            className="btn-add"
-          >
-            Add to watched list
-          </button>
+        {!isWached ? (
+          <>
+            {" "}
+            <StarRating onSetRating={setUserRating} max={10} />
+            {userRating > 0 && (
+              <button
+                onClick={() => {
+                  handleAddWached();
+                  onCloce();
+                }}
+                className="btn-add"
+              >
+                Add to watched list
+              </button>
+            )}
+          </>
+        ) : (
+          <p>
+            <strong>Movie is already rated</strong>
+          </p>
         )}
         <p>
           <em>{plot}</em>
@@ -307,26 +314,28 @@ function SelectedMovie({ onWatched, onCloce, selectedId }) {
 }
 
 function Box({ children }) {
-  return <div className="box">{children}</div>;
-}
-
-function WatchedBox({ watched }) {
-  const [isOpen2, setIsOpen2] = useState(true);
+  const [isOpen, setIsOpen] = useState(true);
 
   return (
-    <div className="box">
-      <button
-        className="btn-toggle"
-        onClick={() => setIsOpen2((open) => !open)}
-      >
-        {isOpen2 ? "–" : "+"}
-      </button>
-      {isOpen2 && (
-        <>
-          <WatchedList watched={watched} />
-        </>
-      )}
-    </div>
+    <>
+      <div className="box">
+        <button
+          className="btn-toggle"
+          onClick={() => setIsOpen((open) => !open)}
+        >
+          {isOpen ? "–" : "+"}
+        </button>
+        {isOpen && <div className="box">{children}</div>}
+      </div>
+    </>
+  );
+}
+
+function WatchedBox({ handleDeleteMovie, watched }) {
+  return (
+    <>
+      <WatchedList handleDeleteMovie={handleDeleteMovie} watched={watched} />
+    </>
   );
 }
 
@@ -359,17 +368,21 @@ function Summary({ watched }) {
   );
 }
 
-function WatchedList({ watched }) {
+function WatchedList({ handleDeleteMovie, watched }) {
   return (
     <ul className="list">
       {watched.map((movie) => (
-        <WatchedMovie movie={movie} key={movie.imdbID} />
+        <WatchedMovie
+          handleDeleteMovie={handleDeleteMovie}
+          movie={movie}
+          key={movie.imdbID}
+        />
       ))}
     </ul>
   );
 }
 
-function WatchedMovie({ movie }) {
+function WatchedMovie({ handleDeleteMovie, movie }) {
   return (
     <li key={movie.imdbID}>
       <img src={movie.poster} alt={`${movie.title} poster`} />
@@ -388,6 +401,13 @@ function WatchedMovie({ movie }) {
           <span>{movie.runtime} min</span>
         </p>
       </div>
+
+      <button
+        className="btn-delete"
+        onClick={() => handleDeleteMovie(movie.imdbID)}
+      >
+        X
+      </button>
     </li>
   );
 }

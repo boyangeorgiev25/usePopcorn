@@ -7,12 +7,16 @@ const average = (arr) =>
 const KEY = "b624d095";
 
 export default function App() {
-  const [watched, setWatched] = useState([]);
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
+
+  const [watched, setWatched] = useState(function () {
+    const storage = localStorage.getItem("watched");
+    return storage ? JSON.parse(storage) : [];
+  });
 
   function handleSelectMovie(id) {
     setSelectedId((selectedId) => (id === selectedId ? null : id));
@@ -32,6 +36,13 @@ export default function App() {
       }
     });
   }
+
+  useEffect(
+    function () {
+      localStorage.setItem("watched", JSON.stringify(watched));
+    },
+    [watched]
+  );
 
   function handleDeleteMovie(id) {
     setWatched((watched) => watched.filter((m) => m.imdbID !== id));

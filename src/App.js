@@ -236,6 +236,7 @@ function SelectedMovie({ watched, onWatched, onCloce, selectedId }) {
         );
         const data = await res.json();
         setMovie(data);
+        document.title = data.Title + " 🍿";
       }
       getMovieDetails();
     },

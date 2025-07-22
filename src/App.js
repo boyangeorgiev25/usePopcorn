@@ -39,13 +39,16 @@ export default function App() {
 
   useEffect(
     function () {
+      const controller = new AbortController();
+
       async function fetchMovies() {
         try {
           setLoading(true);
           setError("");
 
           const res = await fetch(
-            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
+            { signal: controller.signal }
           );
           if (!res.ok) {
             throw new Error("Network response was not ok");
@@ -70,6 +73,7 @@ export default function App() {
             )
           );
         } catch (error) {
+          if (error.name === "AbortError") return;
           setError(error.message);
         } finally {
           setLoading(false);
@@ -82,8 +86,13 @@ export default function App() {
         setLoading(false);
         return;
       }
-
+      closeMovie();
       fetchMovies();
+
+      return function () {
+        controller.abort();
+        console.log("a");
+      };
     },
     [query]
   );
@@ -236,11 +245,38 @@ function SelectedMovie({ watched, onWatched, onCloce, selectedId }) {
         );
         const data = await res.json();
         setMovie(data);
-        document.title = data.Title + " 🍿";
       }
       getMovieDetails();
     },
     [selectedId]
+  );
+
+  useEffect(
+    function () {
+      document.title = movie.Title + " 🍿";
+
+      return function () {
+        document.title = "🍿 Welcome to PopCorn";
+      };
+    },
+    [movie.Title]
+  );
+
+  useEffect(
+    function () {
+      function callBack(e) {
+        if (e.code === "Escape") {
+          onCloce();
+        }
+      }
+
+      document.addEventListener("keydown", callBack);
+
+      return function () {
+        document.removeEventListener("keydown", callBack);
+      };
+    },
+    [onCloce]
   );
 
   function handleAddWached() {
